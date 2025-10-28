@@ -55,7 +55,7 @@ impl LolLexer {
             Some(_) => {
                 let w = self.get_token();
                 let up = w.to_ascii_uppercase();
-                if(self.plain_keywords.contains(&up.as_str())){
+                if self.plain_keywords.contains(&up.as_str()) {
                     return up;
                 }else{
                     return format!("TEXT({})", w);
@@ -118,7 +118,7 @@ impl LolLexer {
 
     fn read_hash_keyword(&mut self) -> String {
         
-        
+        self.advance();
         let first_token = self.get_token();
 
         // some tokens such as "#I HAZ" have two parts, so we need to check for them

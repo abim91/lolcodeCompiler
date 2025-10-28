@@ -1,10 +1,40 @@
-fn main() {
-    let src = "
-        #HAI
-        #MAEK HEAD
-        #GIMMEH TITLE Hello World #MKAY
-        #I HAZ myname #IT IZ Josh #MKAY
-        #KTHXBYE
-        ";
+mod lexer;
 
+use crate::lexer::LolLexer;
+
+fn main() {
+    let src = "#HAI
+		#OBTW This is a LOLCODE Markdown source file #TLDR
+		#MAEK HEAD
+			#GIMMEH TITLE The Simpsons #MKAY
+		#OIC
+		#MAEK PARAGRAF
+			The Simpsons! #GIMMEH NEWLINE
+			#GIMMEH SOUNDZ 
+                http://www.televisiontunes.com/themesongs/The%20Simpsons.mp3 
+                #MKAY
+			#GIMMEH NEWLINE
+
+			The members of the #GIMMEH BOLD Simpson #MKAY family are:
+			#MAEK LIST
+				#GIMMEH ITEM Homer Simpson #MKAY
+				#GIMMEH ITEM Marge Simpson #MKAY
+				#GIMMEH ITEM Bart Simpson #MKAY
+				#GIMMEH ITEM Lisa Simpson #MKAY
+				#GIMMEH ITEM Maggie Simpson #MKAY 
+			#OIC
+			#GIMMEH NEWLINE
+			Lets watch now: #GIMMEH NEWLINE
+			#GIMMEH VIDZ http://www.youtube.com/embed/zoO0s1ukcqQ #MKAY
+		#OIC
+	#KTHXBYE
+";
+
+    let mut c = LolLexer::new(src);
+
+    loop {
+        let t = c.next_token();
+        println!("{t}");
+        if t == "EOF" { break; }
+    }
 }
