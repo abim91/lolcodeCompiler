@@ -1,6 +1,9 @@
 mod lexer;
+mod syntaxAnalyzer;
 
+use syntaxAnalyzer::{SyntaxAnalyzer, LolCodeSyntaxAnalyzer};
 use crate::lexer::LolLexer;
+
 
 fn main() {
     let src = "#HAI
@@ -44,13 +47,20 @@ fn main() {
 #KTHXBYE
 ";
 
-    let mut c = LolLexer::new(src);
+    let src3 = " 
+					#HAI
+					
+					";
 
-    loop {
-        let t = c.next_token();
-        println!("{t}");
-        if t == "EOF" {
-            break;
-        }
-    }
+    let mut c = LolLexer::new(src3);
+	let mut parser = LolCodeSyntaxAnalyzer::collectTokens(c);
+	parser.parse_lolcode();
+	println!("compelted");
+    // loop {
+    //     let t = c.next_token();
+    //     println!("{t}");
+    //     if t == "EOF" {
+    //         break;
+    //     }
+    // }
 }

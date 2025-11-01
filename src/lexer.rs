@@ -11,20 +11,20 @@ pub struct LolLexer {
     pub col: usize,
     potential_token: String,
 
-    hash_keywords: [&'static str; 11],
-    plain_keywords: [&'static str; 10],
+    hash_annotations : [&'static str; 11],
+    plain_annotations : [&'static str; 10],
 }
 
 impl LolLexer {
     pub fn new(source: &str) -> Self {
         LolLexer {
             input: source.chars().collect(),
-            index: 0,
+            index: 0,//to give information about potential errors 
             line: 1,
             col: 0,
             potential_token: String::new(),
 
-            hash_keywords: [
+            hash_annotations : [
                 "#HAI",
                 "#KTHXBYE",
                 "#OBTW",
@@ -37,7 +37,7 @@ impl LolLexer {
                 "#IT IZ",
                 "#LEMME SEE",
             ],
-            plain_keywords: [
+            plain_annotations : [
                 "HEAD", "TITLE", "PARAGRAF", "BOLD", "ITALICS", "LIST", "ITEM", "NEWLINE",
                 "SOUNDZ", "VIDZ",
             ],
@@ -56,7 +56,7 @@ impl LolLexer {
             Some(_) => {
                 let w = self.get_token();
                 let up = w.to_ascii_uppercase();
-                if self.plain_keywords.contains(&up.as_str()) {
+                if self.plain_annotations .contains(&up.as_str()) {
                     return up;
                 } else {
                     return format!("TEXT({})", w);
@@ -176,8 +176,8 @@ impl LexicalAnalyzer for LolLexer {
     fn lookup(&self, s: &str) -> bool {
         let up = s.to_ascii_uppercase();
         let mut i = 0;
-        while i < self.hash_keywords.len() {
-            if self.hash_keywords[i] == up {
+        while i < self.hash_annotations .len() {
+            if self.hash_annotations [i] == up {
                 return true;
             }
             i += 1;
