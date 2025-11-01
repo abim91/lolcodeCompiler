@@ -1,9 +1,8 @@
 mod lexer;
 mod syntaxAnalyzer;
 
-use syntaxAnalyzer::{SyntaxAnalyzer, LolCodeSyntaxAnalyzer};
 use crate::lexer::LolLexer;
-
+use syntaxAnalyzer::{LolCodeSyntaxAnalyzer, SyntaxAnalyzer};
 
 fn main() {
     let src = "#HAI
@@ -49,13 +48,23 @@ fn main() {
 
     let src3 = " 
 					#HAI
-					
+					#OBTW
+					Going to Japan 2025
+					#TLDR
+					#KTHXBYE
 					";
+    let src4 = "
+	#HAI
+#MAEK HEAD 
+	#GIMMEH TITLE Test 6 #MKAY
+#OIC
+	#KTHXBYE
+	";
 
-    let mut c = LolLexer::new(src3);
-	let mut parser = LolCodeSyntaxAnalyzer::collectTokens(c);
-	parser.parse_lolcode();
-	println!("compelted");
+    let mut c = LolLexer::new(src4);
+    let mut parser = LolCodeSyntaxAnalyzer::collectTokens(c);
+    parser.parse_lolcode();
+    println!("compelted");
     // loop {
     //     let t = c.next_token();
     //     println!("{t}");

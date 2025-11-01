@@ -59,7 +59,7 @@ impl LolLexer {
                 if self.plain_annotations .contains(&up.as_str()) {
                     return up;
                 } else {
-                    return format!("TEXT({})", w);
+                    return format!("TEXT({})", w);//Regular text will be identified using TEXT() wrapper.
                 }
             }
         }
@@ -135,7 +135,7 @@ impl LolLexer {
             format!("#{}",first_token)
         };
 
-        if first_token == complete_token{
+        if format!("#{}",first_token) == complete_token{
              self.index = save_i;
              self.line = save_line;
              self.col = save_col;
