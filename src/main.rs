@@ -10,11 +10,11 @@ fn main() {
 		#MAEK HEAD
 			#GIMMEH TITLE The Simpsons #MKAY
 		#OIC
-		#I HAZ
+		#MAEK PARAGRAF
 			The Simpsons! #GIMMEH NEWLINE
 			#GIMMEH SOUNDZ 
-                http://www.televisiontunes.com/themesongs/The%20Simpsons.mp3 
-                #MKAY
+http://www.televisiontunes.com/themesongs/The%20Simpsons.mp3 
+#MKAY
 			#GIMMEH NEWLINE
 
 			The members of the #GIMMEH BOLD Simpson #MKAY family are:
@@ -29,7 +29,8 @@ fn main() {
 			Lets watch now: #GIMMEH NEWLINE
 			#GIMMEH VIDZ http://www.youtube.com/embed/zoO0s1ukcqQ #MKAY
 		#OIC
-	#KTHXBYE
+		#OBTW This is a LOLCODE Markdown source file #TLDR
+	#KTHXBYE	
 ";
 
     let src2 = "#HAI
@@ -61,7 +62,7 @@ fn main() {
 	#KTHXBYE
 	";
 
-    let mut c = LolLexer::new(src4);
+    let mut c = LolLexer::new(src3);
     let mut parser = LolCodeSyntaxAnalyzer::collectTokens(c);
     parser.parse_lolcode();
     println!("compelted");
