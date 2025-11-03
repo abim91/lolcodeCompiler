@@ -62,10 +62,12 @@ http://www.televisiontunes.com/themesongs/The%20Simpsons.mp3
 	#KTHXBYE
 	";
 
-    let mut c = LolLexer::new(src3);
-    let mut parser = LolCodeSyntaxAnalyzer::collectTokens(c);
+    let mut c = LolLexer::new(src);
+    let mut parser = LolCodeSyntaxAnalyzer::collect_tokens(c);
     parser.parse_lolcode();
+	println!("{:#?}", parser.ast);
     println!("compelted");
+	// println!("{:?}",parser.blocks);
     // loop {
     //     let t = c.next_token();
     //     println!("{t}");
@@ -73,4 +75,5 @@ http://www.televisiontunes.com/themesongs/The%20Simpsons.mp3
     //         break;
     //     }
     // }
+	 
 }

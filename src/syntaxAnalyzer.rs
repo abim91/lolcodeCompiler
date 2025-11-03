@@ -1,4 +1,22 @@
 use crate::lexer::LolLexer;
+#[derive(Debug, Clone)]
+pub enum AST {
+    Program { parts: Vec<AST> },
+    Comment(String),
+    Head { title: String },
+    Text(String),
+    Paragraph { items: Vec<AST> },
+    Bold(String),
+    Italics(String),
+    List { items: Vec<AST> },
+    ListItem { items: Vec<AST> },
+    Audio(String),
+    Video(String),
+    Newline,
+    VarDefine { name: String, value: String },
+    VarUse(String),
+}
+
 
 pub trait SyntaxAnalyzer {
     fn parse_lolcode(&mut self);
@@ -24,16 +42,16 @@ pub trait SyntaxAnalyzer {
 
 //
 
-pub struct LolCodeSyntaxAnalyzer {
-    //The parser which will have collection of tokens
+pub struct LolCodeSyntaxAnalyzer {    //The parser which will have collection of tokens
     //and a postition variable to keep track of syntax errors.
     pub tokens: Vec<String>,
     pub position: usize,
+    pub ast: Vec<AST>, 
 }
 
 impl LolCodeSyntaxAnalyzer {
     //Using the lexer to get all of the valid tokens
-    pub fn collectTokens(mut lexer: LolLexer) -> Self {
+    pub fn collect_tokens(mut lexer: LolLexer) -> Self {
         let mut tokens: Vec<String> = Vec::new();
         let mut t = lexer.next_token();
         while t != "EOF" {
@@ -44,6 +62,7 @@ impl LolCodeSyntaxAnalyzer {
         LolCodeSyntaxAnalyzer {
             tokens: tokens,
             position: 0,
+            ast: Vec::new(),
         }
     }
 
@@ -58,8 +77,11 @@ impl LolCodeSyntaxAnalyzer {
 
     fn error(&self, excep_token: &str, funcFrom: &str) {
         eprintln!(
-            "Hello From {} function. Syntax error at line {}, Expected {} token",
-            funcFrom, self.position, excep_token
+            "Hello From {} function. Syntax error near position {}, Expected {} token, found {}",
+            funcFrom,
+            self.position,
+            excep_token,
+            if self.position < self.tokens.len() { &self.tokens[self.position] } else { "EOF" }
         );
         std::process::exit(1);
     }
@@ -71,13 +93,23 @@ impl LolCodeSyntaxAnalyzer {
             "EOF"
         }
     }
+
     fn is_text(&self, tok: &str) -> bool {
         tok.starts_with("TEXT(") && tok.ends_with(')')
+    }
+
+    fn text_content(tok: &str) -> String {
+        tok.trim_start_matches("TEXT(")
+            .trim_end_matches(')')
+            .to_string()
     }
 }
 
 impl SyntaxAnalyzer for LolCodeSyntaxAnalyzer {
     fn parse_lolcode(&mut self) {
+        // remember where this program starts in AST
+        let start_len = self.ast.len();
+
         self.expect("#HAI");
 
         while self.current() == "#OBTW" {
@@ -85,13 +117,13 @@ impl SyntaxAnalyzer for LolCodeSyntaxAnalyzer {
         }
 
         if self.current() == "#MAEK" {
-            println!("we are here");
             self.parse_head();
         }
-
+        
         self.parse_body();
-
         self.expect("#KTHXBYE");
+        let parts: Vec<AST> = self.ast.drain(start_len..).collect();
+        self.ast.push(AST::Program { parts });
     }
 
     fn parse_head(&mut self) {
@@ -100,24 +132,41 @@ impl SyntaxAnalyzer for LolCodeSyntaxAnalyzer {
         self.parse_title();
         self.expect("#OIC");
     }
+
     fn parse_title(&mut self) {
         self.expect("#GIMMEH");
         self.expect("TITLE");
+
+        let mut parts: Vec<String> = Vec::new();
         while self.is_text(self.current()) {
-            self.parse_text();
+            let tok = self.current().to_string();
+            let txt = Self::text_content(&tok);
+            self.position += 1; 
+            parts.push(txt);
         }
+
         self.expect("#MKAY");
+
+        let title = parts.join(" ");
+        self.ast.push(AST::Head { title });
     }
 
-    //it will read out all the
+  
     fn parse_comment(&mut self) {
         self.expect("#OBTW");
 
-        while self.current().starts_with("TEXT(") && self.current().ends_with(')') {
-            self.parse_text();
+        let mut parts: Vec<String> = Vec::new();
+        while self.is_text(self.current()) {
+            let tok = self.current().to_string();
+            let txt = Self::text_content(&tok);
+            parts.push(txt);
+            self.position += 1;
         }
 
         self.expect("#TLDR");
+
+        let comment_text = parts.join(" ");
+        self.ast.push(AST::Comment(comment_text));
     }
 
     fn parse_body(&mut self) {
@@ -157,10 +206,15 @@ impl SyntaxAnalyzer for LolCodeSyntaxAnalyzer {
     }
 
     fn parse_paragraph(&mut self) {
+        // paragraph will collect its children
+        let start_len = self.ast.len();
         self.expect("#MAEK");
         self.expect("PARAGRAF");
         self.parse_inner_paragraph();
         self.expect("#OIC");
+
+        let items: Vec<AST> = self.ast.drain(start_len..).collect();
+        self.ast.push(AST::Paragraph { items });
     }
 
     fn parse_inner_paragraph(&mut self) {
@@ -181,9 +235,9 @@ impl SyntaxAnalyzer for LolCodeSyntaxAnalyzer {
                 ("#GIMMEH", "ITALICS") => self.parse_italics(),
                 ("#GIMMEH", "NEWLINE") => self.parse_newline(),
                 ("#GIMMEH", "ITEM") => self.parse_list_items(),
-                ("#GIMMEH", "SOUNDZ") => self.parse_audio(),    
+                ("#GIMMEH", "SOUNDZ") => self.parse_audio(),
                 ("#GIMMEH", "VIDZ") => self.parse_video(),
-                ("TEXT()", _) => self.parse_text(),
+                ("TEXT()", _) => self.parse_inner_text(),
                 ("#MAEK", "LIST") => self.parse_list(),
                 ("#I HAZ", _) => self.parse_variable_define(),
 
@@ -192,81 +246,104 @@ impl SyntaxAnalyzer for LolCodeSyntaxAnalyzer {
         }
     }
     fn parse_inner_text(&mut self) {
-        while self.position < self.tokens.len() {
-            let cur = self.tokens[self.position].as_str();
-
-            if cur.starts_with("TEXT(") && cur.ends_with(')') {
-                self.parse_text();
-            } else if cur == "#GIMMEH" {
-                let next = if self.position + 1 < self.tokens.len() {
-                    self.tokens[self.position + 1].as_str()
-                } else {
-                    "EOF"
-                };
-
-                if next == "BOLD" {
-                    self.parse_bold();
-                } else if next == "ITALICS" {
-                    self.parse_italics();
-                } else if next == "SOUNDZ" {
-                    self.parse_audio();
-                } else if next == "VIDZ" {
-                    self.parse_video();
-                } else if next == "NEWLINE" {
-                    self.parse_newline();
-                } else {
-                    break;
-                }
-            } else if cur == "#LEMME SEE" {
-                self.parse_variable_use();
-            } else {
-                break; // reached end of inner text region
-            }
-        }
+       self.parse_text();
     }
 
     fn parse_variable_define(&mut self) {
         self.expect("#I HAZ");
-        self.parse_text();
+        self.parse_text();      
         self.expect("#IT IZ");
-        self.parse_text();
+        self.parse_text();      
         self.expect("#MKAY");
+
+        
+        let value_node = self.ast.pop().unwrap();
+        let name_node  = self.ast.pop().unwrap();
+
+        let value = match value_node {
+            AST::Text(s) => s,
+            _ => "<bad value>".to_string(),
+        };
+        let name = match name_node {
+            AST::Text(s) => s,
+            _ => "<bad name>".to_string(),
+        };
+
+        self.ast.push(AST::VarDefine { name, value });
     }
+
     fn parse_variable_use(&mut self) {
         self.expect("#LEMME SEE");
-        self.parse_text();
+        self.parse_text();    
         self.expect("#MKAY");
+
+        let name_node = self.ast.pop().unwrap();
+        let name = match name_node {
+            AST::Text(s) => s,
+            _ => "<bad var>".to_string(),
+        };
+        self.ast.push(AST::VarUse(name));
     }
+
     fn parse_bold(&mut self) {
         self.expect("#GIMMEH");
         self.expect("BOLD");
-        self.parse_text();
+        self.parse_text();          
         self.expect("#MKAY");
+
+        let txt_node = self.ast.pop().unwrap();
+        let txt = match txt_node {
+            AST::Text(s) => s,
+            _ => "".to_string(),
+        };
+        self.ast.push(AST::Bold(txt));
     }
+
     fn parse_italics(&mut self) {
         self.expect("#GIMMEH");
         self.expect("ITALICS");
 
+        
+        let mut parts = Vec::new();
         while self.is_text(self.current()) {
-            self.parse_text();
+            let tok = self.current().to_string();
+            let txt = Self::text_content(&tok);
+            self.position += 1;
+            parts.push(txt);
         }
+
         self.expect("#MKAY");
+
+        let inner = parts.join(" ");
+        self.ast.push(AST::Italics(inner));
     }
+
     fn parse_list(&mut self) {
-        print!("we in list ");
+        let start_len = self.ast.len();
+
         self.expect("#MAEK");
         self.expect("LIST");
         self.parse_list_items();
         self.expect("#OIC");
+
+        let items = self.ast.drain(start_len..).collect();
+        self.ast.push(AST::List { items });
     }
+
     fn parse_list_items(&mut self) {
         while self.current() == "#GIMMEH" && self.tokens[self.position + 1].as_str() == "ITEM" {
+            let start_len = self.ast.len();
+
             self.expect("#GIMMEH");
             self.expect("ITEM");
             self.parse_inner_list();
             self.expect("#MKAY");
+
+            let kids = self.ast.drain(start_len..).collect();
+            self.ast.push(AST::ListItem { items: kids });
         }
     }
+
     fn parse_inner_list(&mut self) {
         while self.position < self.tokens.len() {
             let cur = self.current();
@@ -285,28 +362,49 @@ impl SyntaxAnalyzer for LolCodeSyntaxAnalyzer {
             }
         }
     }
+
     fn parse_audio(&mut self) {
         self.expect("#GIMMEH");
         self.expect("SOUNDZ");
-        self.parse_text();
+        self.parse_text();   
         self.expect("#MKAY");
+
+        let url_node = self.ast.pop().unwrap();
+        let url = match url_node {
+            AST::Text(s) => s,
+            _ => "".to_string(),
+        };
+        self.ast.push(AST::Audio(url));
     }
+
     fn parse_video(&mut self) {
         self.expect("#GIMMEH");
         self.expect("VIDZ");
-        self.parse_text();
+        self.parse_text();   
         self.expect("#MKAY");
+
+        let url_node = self.ast.pop().unwrap();
+        let url = match url_node {
+            AST::Text(s) => s,
+            _ => "".to_string(),
+        };
+        self.ast.push(AST::Video(url));
     }
+
     fn parse_newline(&mut self) {
         self.expect("#GIMMEH");
         self.expect("NEWLINE");
+        self.ast.push(AST::Newline);
     }
+
     fn parse_text(&mut self) {
         let tok = self.current();
         if tok.starts_with("TEXT(") && tok.ends_with(')') {
+            let txt = Self::text_content(tok);
             self.position += 1;
+            self.ast.push(AST::Text(txt));
         } else {
-            self.error("TEXT()", "partse_text");
+            self.error("TEXT()", "parse_text");
         }
     }
 }
