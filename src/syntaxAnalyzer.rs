@@ -17,7 +17,6 @@ pub enum AST {
     VarUse(String),
 }
 
-
 pub trait SyntaxAnalyzer {
     fn parse_lolcode(&mut self);
     fn parse_head(&mut self);
@@ -40,7 +39,6 @@ pub trait SyntaxAnalyzer {
     fn parse_text(&mut self);
 }
 
-//
 
 pub struct LolCodeSyntaxAnalyzer {    //The parser which will have collection of tokens
     //and a postition variable to keep track of syntax errors.
@@ -151,7 +149,6 @@ impl SyntaxAnalyzer for LolCodeSyntaxAnalyzer {
         self.ast.push(AST::Head { title });
     }
 
-  
     fn parse_comment(&mut self) {
         self.expect("#OBTW");
 

@@ -128,7 +128,7 @@ impl LolLexer {
         self.skip_ws();
 
         let second_token = self.get_token().to_ascii_uppercase();
-        let mut potentional_FT = format!("#{} {}", first_token,second_token);
+        let potentional_FT = format!("#{} {}", first_token,second_token);
         let complete_token = if self.lookup(&potentional_FT){
             potentional_FT
         }else {

@@ -1,8 +1,11 @@
 mod lexer;
 mod syntaxAnalyzer;
+mod semanticAnalyzer;
 
-use crate::lexer::LolLexer;
+use lexer::LolLexer;
 use syntaxAnalyzer::{LolCodeSyntaxAnalyzer, SyntaxAnalyzer};
+use semanticAnalyzer::ScopeChecker;
+// use crate::syntaxAnalyzer::scope_checker;
 
 fn main() {
     let src = "#HAI
@@ -62,11 +65,67 @@ http://www.televisiontunes.com/themesongs/The%20Simpsons.mp3
 	#KTHXBYE
 	";
 
-    let mut c = LolLexer::new(src);
+	let test7 = "#HAI
+#OBTW This test case assess that your compiler reports an undefined variable. #TLDR
+#MAEK HEAD 
+	#GIMMEH TITLE Test 7 #MKAY
+#OIC
+
+#MAEK PARAGRAF
+	#GIMMEH ITALICS What is the meaning of life. #MKAY 
+	The meaning of #GIMMEH BOLD life #MKAY is #LEMME SEE answer #MKAY
+#OIC
+#KTHXBYE
+";
+
+let test8 = "#HAI
+#OBTW This test case assess that your compiler resolves variable scoping. #TLDR
+#MAEK HEAD 
+	#GIMMEH TITLE Test 8 #MKAY
+#OIC
+
+#I HAZ answer #IT IZ happiness #MKAY
+
+#MAEK PARAGRAF
+	#I HAZ answer #IT IZ 42 #MKAY
+	#GIMMEH ITALICS What is the meaning of life. #MKAY 
+	The meaning of #GIMMEH BOLD life #MKAY is #LEMME SEE answer #MKAY
+#OIC
+
+#MAEK PARAGRAF No. The meaning of life is really #LEMME SEE answer #MKAY #OIC
+
+#KTHXBYE
+";
+
+let test9 = "#HAI
+#OBTW This test case assess that your compiler resolves multiple variable. #TLDR
+#MAEK HEAD 
+	#GIMMEH TITLE Test 9 #MKAY
+#OIC
+
+#I HAZ myanswer #IT IZ happiness #MKAY
+
+#MAEK PARAGRAF
+	#I HAZ answer #IT IZ 42 #MKAY
+	#GIMMEH ITALICS What is the meaning of life. #MKAY 
+	The meaning of #GIMMEH BOLD life #MKAY is #LEMME SEE answer #MKAY
+#OIC
+
+#MAEK PARAGRAF No. The meaning of life is really #LEMME SEE myanswer #MKAY #OIC
+ 
+#KTHXBYE
+
+";
+    let c = LolLexer::new(test9);
     let mut parser = LolCodeSyntaxAnalyzer::collect_tokens(c);
     parser.parse_lolcode();
 	println!("{:#?}", parser.ast);
-    println!("compelted");
+	println!("Finished Parsing");
+
+	let mut checker = ScopeChecker::new();
+
+	checker.check_program(&parser.ast[0]);
+    
 	// println!("{:?}",parser.blocks);
     // loop {
     //     let t = c.next_token();
