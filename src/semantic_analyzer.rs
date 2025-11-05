@@ -1,11 +1,13 @@
-use crate::syntax_analyzer::AST;
-pub struct SemanticAnalyzer {
-    scopes: Vec<Vec<String>>,
+use crate::syntaxAnalyzer::AST;
+pub struct ScopeChecker {
+    scopes: Vec<Vec<String>>, 
 }
 
-impl SemanticAnalyzer {
+impl ScopeChecker {
     pub fn new() -> Self {
-        SemanticAnalyzer { scopes: Vec::new() }
+        ScopeChecker {
+            scopes: Vec::new(),
+        }
     }
 
     pub fn check_program(&mut self, root: &AST) {
@@ -85,7 +87,7 @@ impl SemanticAnalyzer {
                 }
             }
 
-            AST::Head { .. } => {}
+            AST::Head {..} => {}
             AST::Comment(_) => {}
             AST::Text(_) => {}
             AST::Bold(_) => {}
@@ -95,81 +97,6 @@ impl SemanticAnalyzer {
             AST::Newline => {}
         }
     }
-
-    fn parse_lolcode_html(node: &AST, out: &mut String) {
-        match node {
-            AST::Program { parts } => {
-                out.push_str("<html>\n");
-                for p in parts {
-                    Self::parse_lolcode_html(p, out);
-                }
-                out.push_str("</html>\n");
-            }
-            AST::Comment(txt) => {
-                out.push_str("<!-- ");
-                out.push_str(txt);
-                out.push_str(" -->\n");
-            }
-            AST::Head { title } => {
-                out.push_str("<head>\n<title>");
-                out.push_str(title);
-                out.push_str("</title>\n</head>\n");
-            }
-            AST::Paragraph { items } => {
-                out.push_str("<p>");
-                for it in items {
-                    Self::parse_lolcode_html(it, out);
-                }
-                out.push_str("</p>\n");
-            }
-            AST::Bold(txt) => {
-                out.push_str("<b>");
-                out.push_str(txt);
-                out.push_str("</b>");
-            }
-            AST::Italics(txt) => {
-                out.push_str("<i>");
-                out.push_str(txt);
-                out.push_str("</i>");
-            }
-            AST::List { items } => {
-                out.push_str("<ul>\n");
-                for it in items {
-                    Self::parse_lolcode_html(it, out);
-                }
-                out.push_str("</ul>\n");
-            }
-            AST::ListItem { items } => {
-                out.push_str("<li>");
-                for it in items {
-                    Self::parse_lolcode_html(it, out);
-                }
-                out.push_str("</li>\n");
-            }
-            AST::Audio(url) => {
-                out.push_str("<audio controls>\n<source src=\"");
-                out.push_str(url);
-                out.push_str("\">\n</audio>");
-            }
-            AST::Video(url) => {
-                out.push_str("<iframe src=\"");
-                out.push_str(url);
-                out.push_str("\"></iframe>\n");
-            }
-            AST::Newline => out.push_str("<br>\n"),
-            AST::Text(t) => {
-                out.push_str(t);
-                if !t.is_empty() {
-                    out.push(' ');
-                }
-            }
-            AST::VarDefine { .. } | AST::VarUse(_) => {}
-        }
-    }
-
-    pub fn generate(&self, ast: &AST) -> String {
-        let mut h = String::new();
-        Self::parse_lolcode_html(ast, &mut h);
-        return h;
-    }
 }
+
+
