@@ -11,20 +11,20 @@ pub struct LolLexer {
     pub col: usize,
     potential_token: String,
 
-    hash_annotations : [&'static str; 11],
-    plain_annotations : [&'static str; 10],
+    hash_annotations: [&'static str; 11],
+    plain_annotations: [&'static str; 10],
 }
 
 impl LolLexer {
     pub fn new(source: &str) -> Self {
         LolLexer {
             input: source.chars().collect(),
-            index: 0,//to give information about potential errors 
+            index: 0, //to give information about potential errors
             line: 1,
             col: 0,
             potential_token: String::new(),
 
-            hash_annotations : [
+            hash_annotations: [
                 "#HAI",
                 "#KTHXBYE",
                 "#OBTW",
@@ -37,7 +37,7 @@ impl LolLexer {
                 "#IT IZ",
                 "#LEMME SEE",
             ],
-            plain_annotations : [
+            plain_annotations: [
                 "HEAD", "TITLE", "PARAGRAF", "BOLD", "ITALICS", "LIST", "ITEM", "NEWLINE",
                 "SOUNDZ", "VIDZ",
             ],
@@ -56,10 +56,10 @@ impl LolLexer {
             Some(_) => {
                 let w = self.get_token();
                 let up = w.to_ascii_uppercase();
-                if self.plain_annotations .contains(&up.as_str()) {
+                if self.plain_annotations.contains(&up.as_str()) {
                     return up;
                 } else {
-                    return format!("TEXT({})", w);//Regular text will be identified using TEXT() wrapper.
+                    return format!("TEXT({})", w); //Regular text will be identified using TEXT() wrapper.
                 }
             }
         }
@@ -123,31 +123,34 @@ impl LolLexer {
         let save_line = self.line;
         let save_col = self.col;
 
-        if first_token.is_empty() { self.error("Expected keyword after '#'"); }
+        if first_token.is_empty() {
+            self.error("Expected keyword after '#'");
+        }
 
         self.skip_ws();
 
         let second_token = self.get_token().to_ascii_uppercase();
-        let potentional_FT = format!("#{} {}", first_token,second_token);
-        let complete_token = if self.lookup(&potentional_FT){
+        let potentional_FT = format!("#{} {}", first_token, second_token);
+        let complete_token = if self.lookup(&potentional_FT) {
             potentional_FT
-        }else {
-            format!("#{}",first_token)
+        } else {
+            format!("#{}", first_token)
         };
 
-        if format!("#{}",first_token) == complete_token{
-             self.index = save_i;
-             self.line = save_line;
-             self.col = save_col;
+        if format!("#{}", first_token) == complete_token {
+            self.index = save_i;
+            self.line = save_line;
+            self.col = save_col;
         }
 
-        if !self.lookup(&complete_token){
-            self.error(&format!("Not a valid and/or complete token '{}'", complete_token));
+        if !self.lookup(&complete_token) {
+            self.error(&format!(
+                "Not a valid and/or complete token '{}'",
+                complete_token
+            ));
         }
 
         return complete_token;
-
-    
     }
 
     fn error(&self, msg: &str) {
@@ -176,8 +179,8 @@ impl LexicalAnalyzer for LolLexer {
     fn lookup(&self, s: &str) -> bool {
         let up = s.to_ascii_uppercase();
         let mut i = 0;
-        while i < self.hash_annotations .len() {
-            if self.hash_annotations [i] == up {
+        while i < self.hash_annotations.len() {
+            if self.hash_annotations[i] == up {
                 return true;
             }
             i += 1;
