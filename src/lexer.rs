@@ -145,7 +145,7 @@ impl LolLexer {
 
         if !self.lookup(&complete_token) {
             self.error(&format!(
-                "Not a valid and/or complete token '{}'",
+                "'{}' is Not a valid token ",
                 complete_token
             ));
         }

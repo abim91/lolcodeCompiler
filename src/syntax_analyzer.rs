@@ -39,17 +39,17 @@ pub trait SyntaxAnalyzer {
     fn parse_text(&mut self);
 }
 
-
-pub struct LolCodeSyntaxAnalyzer {    //The parser which will have collection of tokens
+pub struct LolCodeSyntaxAnalyzer {
+    //The parser which will have collection of tokens
     //and a postition variable to keep track of syntax errors.
     pub tokens: Vec<String>,
     pub position: usize,
-    pub ast: Vec<AST>, 
+    pub ast: Vec<AST>,
 }
 
 impl LolCodeSyntaxAnalyzer {
     //Using the lexer to get all of the valid tokens
-    pub fn collect_tokens(mut lexer: LolLexer) -> Self {
+    pub fn new(mut lexer: LolLexer) -> Self {
         let mut tokens: Vec<String> = Vec::new();
         let mut t = lexer.next_token();
         while t != "EOF" {
@@ -65,21 +65,24 @@ impl LolCodeSyntaxAnalyzer {
     }
 
     fn expect(&mut self, tok: &str) {
-        let currentToken = self.current().to_string();
-        if currentToken == tok {
+        let current_token = self.current().to_string();
+        if current_token == tok {
             self.position += 1;
         } else {
             self.error(tok, "expect()");
         }
     }
 
-    fn error(&self, excep_token: &str, funcFrom: &str) {
+    fn error(&self, excep_token: &str, func_from: &str) {
         eprintln!(
-            "Hello From {} function. Syntax error near position {}, Expected {} token, found {}",
-            funcFrom,
-            self.position,
+            "Syntax error near position {}. Expected {} token but found {}",
+            self.position,  
             excep_token,
-            if self.position < self.tokens.len() { &self.tokens[self.position] } else { "EOF" }
+            if self.position < self.tokens.len() {
+                &self.tokens[self.position]
+            } else {
+                "EOF"
+            }
         );
         std::process::exit(1);
     }
@@ -117,7 +120,7 @@ impl SyntaxAnalyzer for LolCodeSyntaxAnalyzer {
         if self.current() == "#MAEK" {
             self.parse_head();
         }
-        
+
         self.parse_body();
         self.expect("#KTHXBYE");
         let parts: Vec<AST> = self.ast.drain(start_len..).collect();
@@ -139,7 +142,7 @@ impl SyntaxAnalyzer for LolCodeSyntaxAnalyzer {
         while self.is_text(self.current()) {
             let tok = self.current().to_string();
             let txt = Self::text_content(&tok);
-            self.position += 1; 
+            self.position += 1;
             parts.push(txt);
         }
 
@@ -169,13 +172,13 @@ impl SyntaxAnalyzer for LolCodeSyntaxAnalyzer {
     fn parse_body(&mut self) {
         while self.position < self.tokens.len() {
             let current = self.current();
-            let nextToken = if self.position + 1 < self.tokens.len() {
+            let next_token = if self.position + 1 < self.tokens.len() {
                 &self.tokens[self.position + 1]
             } else {
                 "EOF"
             };
 
-            match (current, nextToken) {
+            match (current, next_token) {
                 ("#MAEK", "PARAGRAF") => {
                     self.parse_paragraph();
                 }
@@ -243,19 +246,18 @@ impl SyntaxAnalyzer for LolCodeSyntaxAnalyzer {
         }
     }
     fn parse_inner_text(&mut self) {
-       self.parse_text();
+        self.parse_text();
     }
 
     fn parse_variable_define(&mut self) {
         self.expect("#I HAZ");
-        self.parse_text();      
+        self.parse_text();
         self.expect("#IT IZ");
-        self.parse_text();      
+        self.parse_text();
         self.expect("#MKAY");
 
-        
         let value_node = self.ast.pop().unwrap();
-        let name_node  = self.ast.pop().unwrap();
+        let name_node = self.ast.pop().unwrap();
 
         let value = match value_node {
             AST::Text(s) => s,
@@ -271,7 +273,7 @@ impl SyntaxAnalyzer for LolCodeSyntaxAnalyzer {
 
     fn parse_variable_use(&mut self) {
         self.expect("#LEMME SEE");
-        self.parse_text();    
+        self.parse_text();
         self.expect("#MKAY");
 
         let name_node = self.ast.pop().unwrap();
@@ -285,22 +287,25 @@ impl SyntaxAnalyzer for LolCodeSyntaxAnalyzer {
     fn parse_bold(&mut self) {
         self.expect("#GIMMEH");
         self.expect("BOLD");
-        self.parse_text();          
+
+        let mut parts: Vec<String> = Vec::new();
+        while self.is_text(self.current()) {
+            let tok = self.current().to_string();
+            let txt = Self::text_content(&tok);
+            self.position += 1;
+            parts.push(txt);
+        }
+
         self.expect("#MKAY");
 
-        let txt_node = self.ast.pop().unwrap();
-        let txt = match txt_node {
-            AST::Text(s) => s,
-            _ => "".to_string(),
-        };
-        self.ast.push(AST::Bold(txt));
+        let inner = parts.join(" ");
+        self.ast.push(AST::Bold(inner));
     }
 
     fn parse_italics(&mut self) {
         self.expect("#GIMMEH");
         self.expect("ITALICS");
 
-        
         let mut parts = Vec::new();
         while self.is_text(self.current()) {
             let tok = self.current().to_string();
@@ -363,7 +368,7 @@ impl SyntaxAnalyzer for LolCodeSyntaxAnalyzer {
     fn parse_audio(&mut self) {
         self.expect("#GIMMEH");
         self.expect("SOUNDZ");
-        self.parse_text();   
+        self.parse_text();
         self.expect("#MKAY");
 
         let url_node = self.ast.pop().unwrap();
@@ -377,7 +382,7 @@ impl SyntaxAnalyzer for LolCodeSyntaxAnalyzer {
     fn parse_video(&mut self) {
         self.expect("#GIMMEH");
         self.expect("VIDZ");
-        self.parse_text();   
+        self.parse_text();
         self.expect("#MKAY");
 
         let url_node = self.ast.pop().unwrap();
