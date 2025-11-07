@@ -40,8 +40,6 @@ pub trait SyntaxAnalyzer {
 }
 
 pub struct LolCodeSyntaxAnalyzer {
-    //The parser which will have collection of tokens
-    //and a postition variable to keep track of syntax errors.
     pub tokens: Vec<String>,
     pub position: usize,
     pub ast: Vec<AST>,
@@ -76,7 +74,7 @@ impl LolCodeSyntaxAnalyzer {
     fn error(&self, excep_token: &str, func_from: &str) {
         eprintln!(
             "Syntax error near position {}. Expected {} token but found {}",
-            self.position,  
+            self.position,
             excep_token,
             if self.position < self.tokens.len() {
                 &self.tokens[self.position]
@@ -123,6 +121,7 @@ impl SyntaxAnalyzer for LolCodeSyntaxAnalyzer {
 
         self.parse_body();
         self.expect("#KTHXBYE");
+        self.expect("EOF");
         let parts: Vec<AST> = self.ast.drain(start_len..).collect();
         self.ast.push(AST::Program { parts });
     }
@@ -191,8 +190,6 @@ impl SyntaxAnalyzer for LolCodeSyntaxAnalyzer {
                 ("#GIMMEH", "NEWLINE") => self.parse_newline(),
                 ("#GIMMEH", "SOUNDZ") => self.parse_audio(),
                 ("#GIMMEH", "VIDZ") => self.parse_video(),
-                ("#GIMMEH", "ITEM") => self.parse_list_items(),
-
                 ("#I HAZ", _) => self.parse_variable_define(),
                 ("#LEMME SEE", _) => self.parse_variable_use(),
 
@@ -210,6 +207,9 @@ impl SyntaxAnalyzer for LolCodeSyntaxAnalyzer {
         let start_len = self.ast.len();
         self.expect("#MAEK");
         self.expect("PARAGRAF");
+        if self.current() == "#I HAZ" {
+            self.parse_variable_define();
+        }
         self.parse_inner_paragraph();
         self.expect("#OIC");
 
@@ -234,12 +234,10 @@ impl SyntaxAnalyzer for LolCodeSyntaxAnalyzer {
                 ("#GIMMEH", "BOLD") => self.parse_bold(),
                 ("#GIMMEH", "ITALICS") => self.parse_italics(),
                 ("#GIMMEH", "NEWLINE") => self.parse_newline(),
-                ("#GIMMEH", "ITEM") => self.parse_list_items(),
                 ("#GIMMEH", "SOUNDZ") => self.parse_audio(),
                 ("#GIMMEH", "VIDZ") => self.parse_video(),
                 ("TEXT()", _) => self.parse_inner_text(),
                 ("#MAEK", "LIST") => self.parse_list(),
-                ("#I HAZ", _) => self.parse_variable_define(),
 
                 _ => break,
             }
@@ -335,12 +333,10 @@ impl SyntaxAnalyzer for LolCodeSyntaxAnalyzer {
     fn parse_list_items(&mut self) {
         while self.current() == "#GIMMEH" && self.tokens[self.position + 1].as_str() == "ITEM" {
             let start_len = self.ast.len();
-
             self.expect("#GIMMEH");
             self.expect("ITEM");
             self.parse_inner_list();
             self.expect("#MKAY");
-
             let kids = self.ast.drain(start_len..).collect();
             self.ast.push(AST::ListItem { items: kids });
         }
