@@ -113,7 +113,7 @@ impl LolLexer {
         }
         self.potential_token.clone()
     }
-
+    //This function checks that any annotations that start with hash are valid
     fn read_hash_keyword(&mut self) -> String {
         self.advance();
         let first_token = self.get_token().to_ascii_uppercase();

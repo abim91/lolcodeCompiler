@@ -18,7 +18,7 @@ impl SemanticAnalyzer {
     fn pop_scope(&mut self) {
         self.scopes.pop();
     }
-
+    // 
     pub fn check_program(&mut self, root: &AST) {
         self.push_scope();
         self.visit(root);
@@ -39,7 +39,7 @@ impl SemanticAnalyzer {
         }
         None
     }
-
+//Each element is appended to its' subarray which represents a scope.
     fn visit(&mut self, node: &AST) {
         match node {
             AST::Program { parts } => {
@@ -77,7 +77,8 @@ impl SemanticAnalyzer {
             AST::VarDefine { name, value } => {
                 self.define(name, value);
             }
-
+            //For each variable use found it will check that it exists within its' own block/scope,
+            //then parent scope and so on.
            AST::VarUse(name) => {
                 if self.lookup(name).is_none() {
                     eprintln!(
@@ -98,7 +99,9 @@ impl SemanticAnalyzer {
             AST::Newline => {}
         }
     }
-
+    /*Generates HTML code based on the Parse Tree. For each lolcode element,
+    it will append an equivalent HTML elements to a output string.
+    */
     fn parse_lolcode_html(&mut self, node: &AST, out: &mut String) {
         match node {
             AST::Program { parts } => {

@@ -61,7 +61,7 @@ impl LolCodeSyntaxAnalyzer {
             ast: Vec::new(),
         }
     }
-
+    ///Helper function to check if each token matches the expected token
     fn expect(&mut self, tok: &str) {
         let current_token = self.current().to_string();
         if current_token == tok {
@@ -105,6 +105,10 @@ impl LolCodeSyntaxAnalyzer {
 }
 
 impl SyntaxAnalyzer for LolCodeSyntaxAnalyzer {
+    /*Each of the following function corresponds to a non-terminal expression.
+    It implements a recursive analyzer, and checks if the source following the correct grammer.
+    If the is correct, it will append the tokens to a parse tree for the semantic analysis phase.
+    */
     fn parse_lolcode(&mut self) {
         // remember where this program starts in AST
         let start_len = self.ast.len();

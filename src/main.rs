@@ -9,6 +9,7 @@ use std::process;
 use syntax_analyzer::{LolCodeSyntaxAnalyzer, SyntaxAnalyzer};
 
 fn main() {
+    //Checking the file input
     let args: Vec<String> = env::args().collect();
     if args.len() < 2 {
         eprintln!("Please Use: lolcompiler.exe  <filename>");
@@ -23,11 +24,13 @@ fn main() {
     let outputFileName = format!("{}.html", filename.trim_end_matches(".lol"));
     println!("{}", outputFileName);
     let contents = fs::read_to_string(filename).expect("Something went wrong reading the file");
-
+    
+    //Running the compiler, entry point
     let mut c = LolCompiler::new(&contents, outputFileName.clone());
     c.compile(&contents);
     
 
+    //configuration to open and present HTML after processing
     #[cfg(target_os = "macos")]
     {
         use std::process::Command;

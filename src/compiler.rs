@@ -5,19 +5,10 @@ use crate::lexer::LolLexer;
 use crate::semantic_analyzer::SemanticAnalyzer;
 use crate::syntax_analyzer::{AST, LolCodeSyntaxAnalyzer, SyntaxAnalyzer};
 pub trait Compiler {
-    /// Begin the compilation process (entry point).
     fn compile(&mut self, source: &str);
-
-    /// Get the next token from the lexical analyzer.
     fn next_token(&mut self) -> String;
-
-    /// Run the syntax analyzer starting from <lolcode>.
     fn parse(&mut self);
-
-    /// Get the current token being processed.
     fn current_token(&self) -> String;
-
-    /// Set the current token (typically used internally).
     fn set_current_token(&mut self, tok: String);
 }
 pub struct LolCompiler {
@@ -42,11 +33,13 @@ impl LolCompiler {
     }
 }
 impl Compiler for LolCompiler {
-    /// Begin the compilation process (entry point).
-    fn compile(&mut self, source: &str) {
-        self.lexer = LolLexer::new(&source);
-        self.tokens.clear();
 
+    ///This function creates Syntax Analyzer and Semantics analyzer.
+    /// It calls on the lexer to scan the src. If successful, runs the parser
+    ///then runs the semantics analysis.
+    
+    fn compile(&mut self, source: &str) {
+       
         let mut tk = self.next_token();
         while tk != "EOF" {
             self.tokens.push(tk.clone());
@@ -58,7 +51,6 @@ impl Compiler for LolCompiler {
             position: 0,
             ast: Vec::new(),
         };
-        println!("{:#?}", parser.ast);
         self.parser = Some(parser);
         self.parse();
     
@@ -66,24 +58,23 @@ impl Compiler for LolCompiler {
         let mut sem_analyzer = SemanticAnalyzer::new();
         let mut html = String::new();
         if let Some(ast) = self.tree.first() {
-            sem_analyzer.check_program(ast); // exits on first semantic error
+            sem_analyzer.check_program(ast); //The parse tree created using teh Parser is passed for semantics analysis
             html = sem_analyzer.generate(ast);
-            print!("{}", html);
         }
+        //Creates and output the HTML file.
         let mut file: File = File::create(self.srcFileName.clone()).expect("Failed to create file");
 
         file.write_all(html.as_bytes())
             .expect("Failed to write to file");
     }
 
-    /// Get the next token from the lexical analyzer.
-    fn next_token(&mut self) -> String {
+    fn next_token(&mut self) -> String {//initates the lexer
         let token = self.lexer.next_token();
         self.current = token.clone();
         return token;
     }
 
-    /// Run the syntax analyzer starting from <lolcode>.
+    /// Runs the syntax analyzer starting from <lolcode>.
     fn parse(&mut self) {
         if let Some(p) = self.parser.as_mut() {
             p.parse_lolcode(); // exits on syntax error
